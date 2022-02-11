@@ -5,7 +5,6 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -30,7 +29,6 @@ func SpeechToText(w http.ResponseWriter, r *http.Request) {
 	t := map[string]interface{}{}
 	if err := json.NewDecoder(r.Body).Decode(&t); err == nil {
 		if encspeech, ok := t["speech"].(string); ok {
-			fmt.Println(encspeech)
 			if speech, err := b64.StdEncoding.DecodeString(encspeech); err == nil {
 				if words, err := Service(speech); err == nil {
 					u := map[string]interface{}{"text": words}
