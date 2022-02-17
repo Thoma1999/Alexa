@@ -54,7 +54,7 @@ func TextToSpeech(w http.ResponseWriter, r *http.Request) {
 			if myXml, err := GenerateXMLByte(words); err == nil {
 				if speech, err := Service([]byte(xml.Header + string(myXml))); err == nil {
 					sEnc := b64.StdEncoding.EncodeToString(speech)
-					u := map[string]interface{}{"text": sEnc}
+					u := map[string]interface{}{"speech": sEnc}
 					w.WriteHeader(http.StatusOK)
 					json.NewEncoder(w).Encode(u)
 				} else {

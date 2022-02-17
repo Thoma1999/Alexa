@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/gorilla/mux"
 )
 
 const (
