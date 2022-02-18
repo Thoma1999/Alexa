@@ -69,33 +69,21 @@ func TextToSpeech(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 func Service(text []byte) ([]byte, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", URI, bytes.NewBuffer(text))
-	check(err)
-
-	req.Header.Set("Content-Type", "application/ssml+xml")
-	req.Header.Set("Ocp-Apim-Subscription-Key", KEY)
-	req.Header.Set("X-Microsoft-OutputFormat", "riff-16khz-16bit-mono-pcm")
-
-	rsp, err2 := client.Do(req)
-	check(err2)
-
-	defer rsp.Body.Close()
-
-	if rsp.StatusCode == http.StatusOK {
-		body, err3 := ioutil.ReadAll(rsp.Body)
-		check(err3)
-		return body, nil
-	} else {
-		return nil, errors.New("cannot convert text to speech")
+	if req, err := http.NewRequest("POST", URI, bytes.NewBuffer(text)); err == nil {
+		req.Header.Set("Content-Type", "application/ssml+xml")
+		req.Header.Set("Ocp-Apim-Subscription-Key", KEY)
+		req.Header.Set("X-Microsoft-OutputFormat", "riff-16khz-16bit-mono-pcm")
+		if rsp, err := client.Do(req); err == nil {
+			if rsp.StatusCode == http.StatusOK {
+				if body, err := ioutil.ReadAll(rsp.Body); err == nil {
+					return body, nil
+				}
+			}
+		}
 	}
+	return nil, errors.New("cannot convert to text to speech")
 }
 
 func main() {

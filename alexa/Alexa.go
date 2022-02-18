@@ -2,10 +2,9 @@ package main
 
 import (
 	"bytes"
-	b64 "encoding/base64"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -17,62 +16,87 @@ func check(e error) {
 	}
 }
 
-func GetResponse(req *http.Request) (string, error) {
+func Stt(question interface{}) (map[string]interface{}, error) {
 	client := &http.Client{}
-	if rsp, err2 := client.Do(req); err2 == nil {
-		defer rsp.Body.Close()
-		if rsp.StatusCode == http.StatusOK {
-			if body, err3 := ioutil.ReadAll(rsp.Body); err3 == nil {
-				return string(body), nil
-			} else {
-				return "", err3
+	uri := "http://localhost:3002/stt"
+	if jsonspeech, err := json.Marshal(question); err == nil {
+		if req, err := http.NewRequest("POST", uri, bytes.NewBuffer(jsonspeech)); err == nil {
+			if rsp, err := client.Do(req); err == nil {
+				if rsp.StatusCode == http.StatusOK {
+					t := map[string]interface{}{}
+					if err := json.NewDecoder(rsp.Body).Decode(&t); err == nil {
+						if q, ok := t["text"].(string); ok {
+							fmt.Println(q)
+						}
+						return t, nil
+					}
+				} else {
+					fmt.Println(rsp.StatusCode)
+				}
 			}
-		} else {
-			return "", errors.New("request was not understood")
 		}
-	} else {
-		return "", err2
 	}
+	return nil, errors.New("Error converting speech to text")
+}
+
+func Alpha(question interface{}) (map[string]interface{}, error) {
+	client := &http.Client{}
+	uri := "http://localhost:3001/alpha"
+	if jsontext, err := json.Marshal(question); err == nil {
+		fmt.Println(string(jsontext))
+		if req, err := http.NewRequest("POST", uri, bytes.NewBuffer(jsontext)); err == nil {
+			if rsp, err := client.Do(req); err == nil {
+				if rsp.StatusCode == http.StatusOK {
+					t := map[string]interface{}{}
+					if err := json.NewDecoder(rsp.Body).Decode(&t); err == nil {
+						if a, ok := t["text"].(string); ok {
+							fmt.Println(a)
+						}
+						return t, nil
+					}
+				} else {
+					fmt.Println(rsp.StatusCode)
+				}
+			}
+		}
+	}
+	return nil, errors.New("Error in answering query")
+}
+
+func Tts(answer interface{}) (map[string]interface{}, error) {
+	client := &http.Client{}
+	uri := "http://localhost:3003/tts"
+	if jsontext, err := json.Marshal(answer); err == nil {
+		if req, err := http.NewRequest("POST", uri, bytes.NewBuffer(jsontext)); err == nil {
+			if rsp, err := client.Do(req); err == nil {
+				if rsp.StatusCode == http.StatusOK {
+					t := map[string]interface{}{}
+					if err := json.NewDecoder(rsp.Body).Decode(&t); err == nil {
+						return t, nil
+					} else {
+						fmt.Println(rsp.StatusCode)
+					}
+				}
+			}
+		}
+	}
+	return nil, errors.New("Error in answering query")
 }
 
 func alexa(w http.ResponseWriter, r *http.Request) {
 	t := map[string]interface{}{}
 	if err := json.NewDecoder(r.Body).Decode(&t); err == nil {
-		if encspeech, ok := t["speech"].(string); ok {
-			if req, err := http.NewRequest("POST", "localhost:3002/stt", bytes.NewReader([]byte(encspeech))); err == nil {
-				if question, err := GetResponse(req); err == nil {
-					if req, err := http.NewRequest("POST", "localhost:3001/alpha", bytes.NewReader([]byte(question))); err == nil {
-						if answer, err := GetResponse(req); err == nil {
-							if encanswer, err := http.NewRequest("POST", "localhost:3003/tts", bytes.NewReader([]byte(answer))); err == nil {
-								u := map[string]interface{}{"speech": encanswer}
-								w.WriteHeader(http.StatusOK)
-								json.NewEncoder(w).Encode(u)
-								if speech, err := b64.StdEncoding.DecodeString(encspeech); err == nil {
-									err = ioutil.WriteFile("answer.wav", speech, 0644)
-									check(err)
-								} else {
-									w.WriteHeader(http.StatusBadRequest)
-								}
-							} else {
-								w.WriteHeader(http.StatusBadRequest)
-							}
-						} else {
-							w.WriteHeader(http.StatusBadRequest)
-						}
-					} else {
-						w.WriteHeader(http.StatusBadRequest)
+		if question, err := Stt(t); err == nil {
+			if answer, err := Alpha(question); err == nil {
+				if speechA, err := Tts(answer); err == nil {
+					if audio, ok := speechA["speech"].(string); ok {
+						u := map[string]interface{}{"speech": audio}
+						w.WriteHeader(http.StatusOK)
+						json.NewEncoder(w).Encode(u)
 					}
-				} else {
-					w.WriteHeader(http.StatusBadRequest)
 				}
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
 			}
-		} else {
-			w.WriteHeader(http.StatusBadRequest)
 		}
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
 	}
 }
 

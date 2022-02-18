@@ -40,8 +40,8 @@ func Service(question string) (string, error) {
 	if req, err := http.NewRequest("GET", uri, nil); err == nil {
 		if rsp, err := client.Do(req); err == nil {
 			if rsp.StatusCode == http.StatusOK {
-				if rspdata, err := ioutil.ReadAll(rsp.Body); err == nil {
-					answer := string(rspdata)
+				if body, err := ioutil.ReadAll(rsp.Body); err == nil {
+					answer := string(body)
 					return answer, nil
 				}
 			}
