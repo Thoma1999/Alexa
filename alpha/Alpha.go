@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -25,6 +26,7 @@ func Alpha(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(u)
 			} else {
+				fmt.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 		} else {
@@ -45,13 +47,14 @@ func Service(question string) (string, error) {
 					answer := string(body)
 					return answer, nil
 				}
-			}
-			if rsp.StatusCode == http.StatusNotImplemented {
+			} else if rsp.StatusCode == http.StatusNotImplemented {
 				return MSG, nil
+			} else {
+				return "", errors.New("error from Wolfram Alpha, status code: " + string(rsp.StatusCode))
 			}
 		}
 	}
-	return "", errors.New("Service")
+	return "", errors.New("error making requst to Wolfram Alpha")
 }
 
 func main() {

@@ -5,6 +5,7 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -28,6 +29,7 @@ func SpeechToText(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					json.NewEncoder(w).Encode(u)
 				} else {
+					fmt.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			} else {
@@ -53,11 +55,12 @@ func Service(speech []byte) (string, error) {
 				if err := json.NewDecoder(rsp.Body).Decode(&t); err == nil {
 					return t["DisplayText"].(string), nil
 				}
+			} else {
+				return "", errors.New("error from Azure speech to text service, status code: " + string(rsp.StatusCode))
 			}
 		}
 	}
-	return "", errors.New("cannot convert to speech to text")
-
+	return "", errors.New("error making requst to Azure speech to text service")
 }
 
 func main() {

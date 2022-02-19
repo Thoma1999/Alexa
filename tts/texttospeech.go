@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -58,6 +59,7 @@ func TextToSpeech(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					json.NewEncoder(w).Encode(u)
 				} else {
+					fmt.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			} else {
@@ -82,10 +84,12 @@ func Service(text []byte) ([]byte, error) {
 				if body, err := ioutil.ReadAll(rsp.Body); err == nil {
 					return body, nil
 				}
+			} else {
+				return nil, errors.New("error from Azure text to speech service, status code: " + string(rsp.StatusCode))
 			}
 		}
 	}
-	return nil, errors.New("cannot convert to text to speech")
+	return nil, errors.New("error making request to Azure text to speech service")
 }
 
 func main() {
