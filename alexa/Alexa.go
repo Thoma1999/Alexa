@@ -36,10 +36,20 @@ func alexa(w http.ResponseWriter, r *http.Request) {
 						u := map[string]interface{}{"speech": audio}
 						w.WriteHeader(http.StatusOK)
 						json.NewEncoder(w).Encode(u)
+					} else {
+						w.WriteHeader(http.StatusInternalServerError)
 					}
+				} else {
+					w.WriteHeader(http.StatusInternalServerError)
 				}
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
 			}
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
 		}
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
 	}
 }
 

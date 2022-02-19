@@ -60,6 +60,8 @@ func TextToSpeech(w http.ResponseWriter, r *http.Request) {
 				} else {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
 			}
 		} else {
 			w.WriteHeader(http.StatusBadRequest)

@@ -31,10 +31,10 @@ func SpeechToText(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			} else {
-				w.WriteHeader(http.StatusBadGateway)
+				w.WriteHeader(http.StatusBadRequest)
 			}
 		} else {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 		}
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
