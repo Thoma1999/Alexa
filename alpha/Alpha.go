@@ -13,6 +13,7 @@ import (
 const (
 	URI = "http://api.wolframalpha.com/v1/result"
 	KEY = "H5U44G-KRU4Q2TLR7"
+	MSG = "Sorry i did not understand that"
 )
 
 func Alpha(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +45,9 @@ func Service(question string) (string, error) {
 					answer := string(body)
 					return answer, nil
 				}
+			}
+			if rsp.StatusCode == http.StatusNotImplemented {
+				return MSG, nil
 			}
 		}
 	}
