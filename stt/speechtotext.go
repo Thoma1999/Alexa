@@ -62,7 +62,7 @@ func Service(speech []byte) (string, error) {
 					}
 				}
 			} else if rsp.StatusCode == http.StatusBadRequest {
-				return "", errors.New("400 error from Azure speech to text service. The language code wasn't provided, the language isn't supported, or the audio file is invalid (for example)")
+				return "", errors.New("400 error from Azure speech to text service. The language code wasn't provided, the language isn't supported, or the audio file is invalid")
 			} else if rsp.StatusCode == http.StatusRequestTimeout {
 				return "", errors.New("408 error from Azure speech to text service. The error most likely occurs because no audio data is being sent to the service. This error also might be caused by network issues")
 			} else if rsp.StatusCode == http.StatusUnauthorized {

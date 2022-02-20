@@ -20,11 +20,13 @@ func Service(jsonData interface{}, uri string, serviceName string) (map[string]i
 					if err := json.NewDecoder(rsp.Body).Decode(&t); err == nil {
 						return t, nil
 					}
+				} else {
+					return nil, fmt.Errorf("%d error from "+serviceName+" service", rsp.StatusCode)
 				}
 			}
 		}
 	}
-	return nil, errors.New("Error in " + serviceName + " service")
+	return nil, errors.New("error making request to " + serviceName + " service")
 }
 
 func alexa(w http.ResponseWriter, r *http.Request) {
