@@ -13,7 +13,7 @@ import (
 
 const (
 	URI = "http://api.wolframalpha.com/v1/result"
-	KEY = "H5U44G-KRU4Q2TLR7"
+	KEY = "H5U44G-KRU4Q2TLR7--dss"
 	MSG = "Sorry i did not understand that"
 )
 
@@ -37,9 +37,10 @@ func Alpha(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//+ "?appid=" + KEY
 func Service(question string) (string, error) {
 	client := &http.Client{}
-	uri := URI + "?appid=" + KEY + "&i=" + url.QueryEscape(question)
+	uri := URI + "&i=" + url.QueryEscape(question)
 	if req, err := http.NewRequest("GET", uri, nil); err == nil {
 		if rsp, err := client.Do(req); err == nil {
 			if rsp.StatusCode == http.StatusOK {
@@ -49,8 +50,10 @@ func Service(question string) (string, error) {
 				}
 			} else if rsp.StatusCode == http.StatusNotImplemented {
 				return MSG, nil
+			} else if rsp.StatusCode == http.StatusForbidden {
+				return "", errors.New("403 error from Wolfram Alpha. appid missing or invalid")
 			} else {
-				return "", errors.New("error from Wolfram Alpha, status code: " + string(rsp.StatusCode))
+				return "", fmt.Errorf("error from Wolfram Alpha service, status code: %d", rsp.StatusCode)
 			}
 		}
 	}

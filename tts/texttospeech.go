@@ -84,8 +84,16 @@ func Service(text []byte) ([]byte, error) {
 				if body, err := ioutil.ReadAll(rsp.Body); err == nil {
 					return body, nil
 				}
+			} else if rsp.StatusCode == http.StatusBadRequest {
+				return nil, errors.New("400 error from Azure text to speech service: A required parameter is missing, empty, or null. Or, the value passed to either a required or optional parameter is invalid. A common reason is a header that's too long")
+			} else if rsp.StatusCode == http.StatusUnauthorized {
+				return nil, errors.New("401 error from Azure text to speech service: The request is not authorized. Make sure your subscription key or token is valid and in the correct region")
+			} else if rsp.StatusCode == http.StatusTooManyRequests {
+				return nil, errors.New("429 error from Azure text to speech service: You have exceeded the quota or rate of requests allowed for your subscription")
+			} else if rsp.StatusCode == http.StatusBadGateway {
+				return nil, errors.New("501 error from Azure text to speech service: There is a network or server-side problem. This status might also indicate invalid headers")
 			} else {
-				return nil, errors.New("error from Azure text to speech service, status code: " + string(rsp.StatusCode))
+				return nil, fmt.Errorf("error from Azure text to speech service, status code: %d", rsp.StatusCode)
 			}
 		}
 	}
