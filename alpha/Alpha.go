@@ -13,7 +13,7 @@ import (
 
 const (
 	URI = "http://api.wolframalpha.com/v1/result"
-	KEY = "H5U44G-KRU4Q2TLR7--dss"
+	KEY = "H5U44G-KRU4Q2TLR7"
 	MSG = "Sorry i did not understand that"
 )
 
@@ -39,7 +39,7 @@ func Alpha(w http.ResponseWriter, r *http.Request) {
 
 func Service(question string) (string, error) {
 	client := &http.Client{}
-	uri := URI + "&i=" + url.QueryEscape(question)
+	uri := URI + "?appid=" + KEY + "&i=" + url.QueryEscape(question)
 	if req, err := http.NewRequest("GET", uri, nil); err == nil {
 		if rsp, err := client.Do(req); err == nil {
 			if rsp.StatusCode == http.StatusOK {

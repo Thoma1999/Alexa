@@ -37,7 +37,7 @@ func alexa(w http.ResponseWriter, r *http.Request) {
 		//Get text from stt
 		if question, err := Service(jsonData, "http://localhost:3002/stt", "Speech to text"); err == nil {
 			//Get answer to query from alpha
-			if answer, err := Service(question, "http://localhost:3001/alpha", "Wolfram Alpha"); err == nil {
+			if answer, err := Service(question, "http://localhost:3001/alpha", "Alpha"); err == nil {
 				//Get spoken answer from tts
 				if speechOutput, err := Service(answer, "http://localhost:3003/tts", "Text to speech"); err == nil {
 					//Get encoded speech as string from speechOutput json
