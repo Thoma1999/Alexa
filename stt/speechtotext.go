@@ -58,15 +58,16 @@ func Service(speech []byte) (string, error) {
 					if t["RecognitionStatus"].(string) == "Success" {
 						return t["DisplayText"].(string), nil
 					} else {
-						// Returns a misunderstanding message if no speech could be detected
-						// Or the language of the speech does not match with the language set
+						// Returns a misunderstanding message if no speech could be detected in the audio
 						fmt.Println(t["RecognitionStatus"].(string))
 						return MSG, nil
 					}
 				}
-				//Return error message for each status code
 			} else if rsp.StatusCode == http.StatusBadRequest {
-				return "", errors.New("400 error from Azure speech to text service. The language code wasn't provided, the language isn't supported, or the audio file is invalid")
+				// Returns a misunderstanding message for incrorrect language or invalid audio file
+				fmt.Println("400 error from Azure speech to text service. The language code wasn't provided, the language isn't supported, or the audio file is invalid")
+				return MSG, nil
+				//Return error message for each status code
 			} else if rsp.StatusCode == http.StatusRequestTimeout {
 				return "", errors.New("408 error from Azure speech to text service. The error most likely occurs because no audio data is being sent to the service. This error also might be caused by network issues")
 			} else if rsp.StatusCode == http.StatusUnauthorized {
