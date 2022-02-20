@@ -18,13 +18,13 @@ const (
 )
 
 func Alpha(w http.ResponseWriter, r *http.Request) {
-	t := map[string]interface{}{}
-	if err := json.NewDecoder(r.Body).Decode(&t); err == nil {
-		if question, ok := t["text"].(string); ok {
+	jsonData := map[string]interface{}{}
+	if err := json.NewDecoder(r.Body).Decode(&jsonData); err == nil {
+		if question, ok := jsonData["text"].(string); ok {
 			if answer, err := Service(question); err == nil {
-				u := map[string]interface{}{"text": answer}
+				jsonResponse := map[string]interface{}{"text": answer}
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(u)
+				json.NewEncoder(w).Encode(jsonResponse)
 			} else {
 				fmt.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -37,7 +37,6 @@ func Alpha(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//+ "?appid=" + KEY
 func Service(question string) (string, error) {
 	client := &http.Client{}
 	uri := URI + "&i=" + url.QueryEscape(question)
@@ -48,7 +47,9 @@ func Service(question string) (string, error) {
 					answer := string(body)
 					return answer, nil
 				}
+				//Return error message for each status code
 			} else if rsp.StatusCode == http.StatusNotImplemented {
+				//A 501 error is returned if the question is not understood, hence return a misunderstanding message rather than an error
 				return MSG, nil
 			} else if rsp.StatusCode == http.StatusForbidden {
 				return "", errors.New("403 error from Wolfram Alpha. appid missing or invalid")
@@ -61,8 +62,8 @@ func Service(question string) (string, error) {
 }
 
 func main() {
+	//Create Router and listen for POST requests on localhost:3001/alpha
 	r := mux.NewRouter()
-	// document
 	r.HandleFunc("/alpha", Alpha).Methods("POST")
 	http.ListenAndServe(":3001", r)
 }

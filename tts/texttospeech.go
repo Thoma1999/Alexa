@@ -34,6 +34,7 @@ const (
 	NAME     = "en-US-JennyNeural"
 )
 
+//Create xml request for tts serices
 func GenerateXMLByte(text string) ([]byte, error) {
 	req := &Speak{}
 	req.Version = VERSION
@@ -49,16 +50,18 @@ func GenerateXMLByte(text string) ([]byte, error) {
 }
 
 func TextToSpeech(w http.ResponseWriter, r *http.Request) {
-	t := map[string]interface{}{}
-	if err := json.NewDecoder(r.Body).Decode(&t); err == nil {
-		if words, ok := t["text"].(string); ok {
+	jsonData := map[string]interface{}{}
+	if err := json.NewDecoder(r.Body).Decode(&jsonData); err == nil {
+		if words, ok := jsonData["text"].(string); ok {
 			if myXml, err := GenerateXMLByte(words); err == nil {
 				if speech, err := Service([]byte(xml.Header + string(myXml))); err == nil {
-					sEnc := b64.StdEncoding.EncodeToString(speech)
-					u := map[string]interface{}{"speech": sEnc}
+					//b64 encode speech
+					encSpeech := b64.StdEncoding.EncodeToString(speech)
+					jsonResponse := map[string]interface{}{"speech": encSpeech}
 					w.WriteHeader(http.StatusOK)
-					json.NewEncoder(w).Encode(u)
+					json.NewEncoder(w).Encode(jsonResponse)
 				} else {
+					//Output error from Azure tts service
 					fmt.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 				}
@@ -84,6 +87,7 @@ func Service(text []byte) ([]byte, error) {
 				if body, err := ioutil.ReadAll(rsp.Body); err == nil {
 					return body, nil
 				}
+				//Return error message for each status code
 			} else if rsp.StatusCode == http.StatusBadRequest {
 				return nil, errors.New("400 error from Azure text to speech service: A required parameter is missing, empty, or null. Or, the value passed to either a required or optional parameter is invalid. A common reason is a header that's too long")
 			} else if rsp.StatusCode == http.StatusUnauthorized {
@@ -101,8 +105,8 @@ func Service(text []byte) ([]byte, error) {
 }
 
 func main() {
+	//Create Router and listen for POST requests on localhost:3003/tts
 	r := mux.NewRouter()
-	// document
 	r.HandleFunc("/tts", TextToSpeech).Methods("POST")
 	http.ListenAndServe(":3003", r)
 }

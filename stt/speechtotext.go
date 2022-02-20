@@ -21,15 +21,16 @@ const (
 )
 
 func SpeechToText(w http.ResponseWriter, r *http.Request) {
-	t := map[string]interface{}{}
-	if err := json.NewDecoder(r.Body).Decode(&t); err == nil {
-		if encspeech, ok := t["speech"].(string); ok {
-			if speech, err := b64.StdEncoding.DecodeString(encspeech); err == nil {
+	jsonData := map[string]interface{}{}
+	if err := json.NewDecoder(r.Body).Decode(&jsonData); err == nil {
+		if encSpeech, ok := jsonData["speech"].(string); ok {
+			if speech, err := b64.StdEncoding.DecodeString(encSpeech); err == nil {
 				if words, err := Service(speech); err == nil {
-					u := map[string]interface{}{"text": words}
+					jsonResponse := map[string]interface{}{"text": words}
 					w.WriteHeader(http.StatusOK)
-					json.NewEncoder(w).Encode(u)
+					json.NewEncoder(w).Encode(jsonResponse)
 				} else {
+					//Output error from Azure stt service
 					fmt.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 				}
@@ -57,10 +58,13 @@ func Service(speech []byte) (string, error) {
 					if t["RecognitionStatus"].(string) == "Success" {
 						return t["DisplayText"].(string), nil
 					} else {
+						// Returns a misunderstanding message if no speech could be detected
+						// Or the language of the speech does not match with the language set
 						fmt.Println(t["RecognitionStatus"].(string))
 						return MSG, nil
 					}
 				}
+				//Return error message for each status code
 			} else if rsp.StatusCode == http.StatusBadRequest {
 				return "", errors.New("400 error from Azure speech to text service. The language code wasn't provided, the language isn't supported, or the audio file is invalid")
 			} else if rsp.StatusCode == http.StatusRequestTimeout {
