@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -21,23 +20,22 @@ func Alpha(w http.ResponseWriter, r *http.Request) {
 	jsonData := map[string]interface{}{}
 	if err := json.NewDecoder(r.Body).Decode(&jsonData); err == nil {
 		if question, ok := jsonData["text"].(string); ok {
-			if answer, err := Service(question); err == nil {
+			if answer, code, err := Service(question); err == nil {
 				jsonResponse := map[string]interface{}{"text": answer}
-				w.WriteHeader(http.StatusOK)
+				w.WriteHeader(code)
 				json.NewEncoder(w).Encode(jsonResponse)
 			} else {
-				fmt.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, err.Error(), code)
 			}
 		} else {
-			w.WriteHeader(http.StatusBadRequest)
+			http.Error(w, "Error getting text field from JSON", http.StatusInternalServerError)
 		}
 	} else {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
 	}
 }
 
-func Service(question string) (string, error) {
+func Service(question string) (string, int, error) {
 	client := &http.Client{}
 	uri := URI + "?appid=" + KEY + "&i=" + url.QueryEscape(question)
 	if req, err := http.NewRequest("GET", uri, nil); err == nil {
@@ -45,20 +43,20 @@ func Service(question string) (string, error) {
 			if rsp.StatusCode == http.StatusOK {
 				if body, err := ioutil.ReadAll(rsp.Body); err == nil {
 					answer := string(body)
-					return answer, nil
+					return answer, http.StatusOK, nil
 				}
 				//Return error message for each status code
 			} else if rsp.StatusCode == http.StatusNotImplemented {
 				//A 501 error is returned if the question is not understood, hence return a misunderstanding message rather than an error
-				return MSG, nil
+				return MSG, http.StatusOK, nil
 			} else if rsp.StatusCode == http.StatusForbidden {
-				return "", errors.New("403 error from Wolfram Alpha. appid missing or invalid")
+				return "", http.StatusForbidden, errors.New("error in response from Wolfram Alpha. appid missing or invalid")
 			} else {
-				return "", fmt.Errorf("error from Wolfram Alpha service, status code: %d", rsp.StatusCode)
+				return "", rsp.StatusCode, errors.New("error in response from Wolfram Alpha service")
 			}
 		}
 	}
-	return "", errors.New("error making requst to Wolfram Alpha")
+	return "", http.StatusInternalServerError, errors.New("error making requst to Wolfram Alpha")
 }
 
 func main() {
