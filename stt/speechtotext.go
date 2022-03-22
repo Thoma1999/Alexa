@@ -53,13 +53,13 @@ func Service(speech []byte) (string, error) {
 		req.Header.Set("Accept", "json")
 		if rsp, err := client.Do(req); err == nil {
 			if rsp.StatusCode == http.StatusOK {
-				t := map[string]interface{}{}
-				if err := json.NewDecoder(rsp.Body).Decode(&t); err == nil {
-					if t["RecognitionStatus"].(string) == "Success" {
-						return t["DisplayText"].(string), nil
+				jsonResponse := map[string]interface{}{}
+				if err := json.NewDecoder(rsp.Body).Decode(&jsonResponse); err == nil {
+					if jsonResponse["RecognitionStatus"].(string) == "Success" {
+						return jsonResponse["DisplayText"].(string), nil
 					} else {
 						// Returns a misunderstanding message if no speech could be detected in the audio
-						fmt.Println(t["RecognitionStatus"].(string))
+						fmt.Println(jsonResponse["RecognitionStatus"].(string))
 						return MSG, nil
 					}
 				}
@@ -88,13 +88,3 @@ func main() {
 	r.HandleFunc("/stt", SpeechToText).Methods("POST")
 	http.ListenAndServe(":3002", r)
 }
-
-/*
-func main() {
-	speech, err1 := ioutil.ReadFile("speech.wav")
-	check(err1)
-	text, err2 := SpeechToText(speech)
-	check(err2)
-	fmt.Println(text)
-}
-*/
